@@ -47,13 +47,13 @@ nu = 0.1/np.pi
 
 lambda_true = [1.0, 1.0, -nu, 0, 0]
 
-model = iPINN(layers, lambdas, 'burgers', ub, lb)
+model = iPINN(layers, lambdas, 'burgers', s_min, s_max)
 params = list(model.dnn.parameters())
 optimizer = torch.optim.LBFGS(params, lr, max_iter = steps, max_eval = None, tolerance_grad = 1e-9, tolerance_change = 1e-9, history_size = 80, line_search_fn = 'strong_wolfe')
 
 def closure():
     optimizer.zero_grad()
-    loss, curr_lambda, loss_data, loss_pde = model.loss(X_train_Nu, U_train_Nu, X_train_Nu)
+    loss, curr_lambda, loss_data, loss_pde = model.loss(X_train, U_train, X_train)
     lambda_preds.append(curr_lambda)
     loss_arr.append(loss.item())
     loss.backward()
