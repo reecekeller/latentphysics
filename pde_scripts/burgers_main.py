@@ -6,8 +6,8 @@ Created on Tue Apr 23 18:47:12 2024
 @author: reecekeller
 """
 
-from iPINN import *
-from plots import *
+from models.iPINN import *
+from plots.plots import *
 
 data = scipy.io.loadmat('burgers_shock.mat')
 x = data['x']                                   # 256 points between -1 and 1 [256x1]

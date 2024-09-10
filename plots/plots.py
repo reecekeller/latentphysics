@@ -6,7 +6,7 @@ Created on Thu Apr 25 11:12:15 2024
 @author: reecekeller
 """
 
-from iPINN import *
+from models.iPINN import *
 
 # fig = plt.figure(figsize=(12, 12))
 # ax = fig.add_subplot(projection='3d')

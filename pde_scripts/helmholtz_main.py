@@ -5,8 +5,8 @@ Created on Thu Apr 25 11:39:55 2024
 
 @author: reecekeller
 """
-from iPINN import *
-from plots import *
+from models.iPINN import *
+from plots.plots import *
 
 x = np.linspace(-1,1,256)  # 256 points between -1 and 1 [256x1]
 t = np.linspace(1,-1,256)  # 256 points between 1 and -1 [256x1]
