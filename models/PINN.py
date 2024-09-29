@@ -16,7 +16,7 @@ class SineActivation(nn.Module):
 class mlp(nn.Module):
     def __init__(self,layers, ub, lb):
         super().__init__() #call __init__ from parent class
-        self.activation = SineActivation()
+        self.activation = nn.Tanh()
         self.linears = nn.ModuleList([nn.Linear(layers[i], layers[i+1]) for i in range(len(layers)-1)])
         for i in range(len(layers)-1):
             nn.init.xavier_normal_(self.linears[i].weight.data, gain=1.0)
@@ -68,18 +68,24 @@ class PINN():
             grad_u_i = torch.autograd.grad(u_i, t, grad_outputs=torch.ones_like(u_i).to(device), create_graph=True)[0]
             derivatives.append(grad_u_i)
         du_dt = torch.stack(derivatives, dim=1)
-        #rhs = torch.tensor([1, -5, 10]).to(torch.float32)
-        rhs = torch.zeros_like(du_dt[:, 0])
-        constraint = torch.pow(du_dt[:, 0], 1) + torch.pow(du_dt[:, 1], 1) + torch.pow(du_dt[:, 2], 1)
-        #return self.loss_function(du_dt[0], rhs[0]) + self.loss_function(du_dt[1], rhs[1]) + self.loss_function(du_dt[2], rhs[2]), du_dt
-        return self.loss_function(constraint, rhs), du_dt
+        du_dt = du_dt.squeeze(2)
+        #rhs = torch.zeros_like(du_dt[:, 0])
+        #constraint = torch.pow(du_dt[:, 0], 2) + torch.pow(du_dt[:, 1], 1) + torch.pow(du_dt[:, 2], 1)
+        kinetic_energy = torch.sum(du_dt**2, dim=1)
+        d_ke_dt = torch.autograd.grad(kinetic_energy, t, grad_outputs=torch.ones_like(kinetic_energy).to(device), create_graph=True)[0]
+        U = torch.sum(u**2, dim=1)
+        grad_u = torch.autograd.grad(U, u, grad_outputs=torch.ones_like(U).to(device), create_graph=True)[0]
+        d_pe_dt = torch.sum(grad_u * du_dt, dim=1)
+        constraint = d_ke_dt.squeeze(1) + d_pe_dt
+        rhs = torch.zeros_like(constraint)
+        return self.loss_function(constraint, rhs), (d_ke_dt, d_pe_dt)
     
     def loss(self, t_0, x_0, t_f, x_f, t):
     
         loss_data = self.loss_data(t_0, x_0, t_f, x_f)
-        loss_ode, u_t = self.loss_ode(t)
+        loss_ode, energy = self.loss_ode(t)
         loss_val = loss_data + 5*loss_ode #+ torch.linalg.norm(self.lambdas, ord=1) + 10* torch.linalg.norm(self.lambdas, ord=2)
-        return loss_val, loss_data, loss_ode, u_t
+        return loss_val, loss_data, loss_ode, energy
     
 class Autodecoder(nn.Module):
     def __init__(self):
