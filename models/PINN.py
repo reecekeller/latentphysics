@@ -46,12 +46,13 @@ class PINN():
         'Initialize iterator'
         self.iter = 0
         self.dnn = mlp(layers, ub, lb).to(device)
-
-    def loss_data(self,t_0, t_f, x_0, x_f):
+        self.t0 = lb
+        self.tf = ub
+    def loss_data(self, x_0, x_f):
 
         # y is initial condition
-        u_0 = self.dnn(t_0)
-        u_f = self.dnn(t_f)
+        u_0 = self.dnn(self.t0)
+        u_f = self.dnn(self.tf)
         loss_u = self.loss_function(u_0, x_0) + self.loss_function(u_f, x_f)
         return loss_u
 
@@ -80,9 +81,9 @@ class PINN():
         rhs = torch.zeros_like(constraint)
         return self.loss_function(constraint, rhs), (d_ke_dt, d_pe_dt)
     
-    def loss(self, t_0, x_0, t_f, x_f, t):
+    def loss(self, x_0, x_f, t):
     
-        loss_data = self.loss_data(t_0, x_0, t_f, x_f)
+        loss_data = self.loss_data(x_0, x_f)
         loss_ode, energy = self.loss_ode(t)
         loss_val = loss_data + 5*loss_ode #+ torch.linalg.norm(self.lambdas, ord=1) + 10* torch.linalg.norm(self.lambdas, ord=2)
         return loss_val, loss_data, loss_ode, energy
